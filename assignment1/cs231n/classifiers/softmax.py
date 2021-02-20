@@ -30,7 +30,23 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  num_classes = W.shape[1]
+  num_train = X.shape[0]
+  for i in xrange(num_train):
+    unnorm_log_prob = X[i].dot(W)
+    unnorm_log_prob = unnorm_log_prob - np.max(unnorm_log_prob)
+    unnorm_prob = np.exp(unnorm_log_prob)
+    total = np.sum(unnorm_prob)
+    norm_prob = unnorm_prob / total
+    loss += -np.log(norm_prob[y[i]])
+    for j in xrange(num_classes):
+        dW[:, j] += unnorm_prob[j] * X[i] / total
+    dW[:, y[i]] -= X[i]
+  
+  loss /= num_train
+  loss += reg * 0.5 * np.sum(W*W)
+  dW /= num_train
+  dW += reg * W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
@@ -54,7 +70,21 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  num_classes = W.shape[1]
+  num_train = X.shape[0]
+  
+  unnorm_log_prob = X.dot(W)
+  unnorm_log_prob = unnorm_log_prob - np.max(unnorm_log_prob, axis = -1, keepdims = True)
+  unnorm_prob = np.exp(unnorm_log_prob)
+  total = np.sum(unnorm_prob, axis = 1).reshape(num_train, 1)
+
+  norm_prob = unnorm_prob / total
+  loss += np.mean(-np.log(norm_prob[np.arange(num_train), y]))
+  loss += reg * 0.5 * np.sum(W*W)
+  norm_prob[np.arange(num_train), y] -= 1
+  dW = (X.T).dot(norm_prob)
+  dW /= num_train
+  dW += reg * W 
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
