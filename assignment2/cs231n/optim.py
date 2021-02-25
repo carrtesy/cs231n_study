@@ -65,7 +65,10 @@ def sgd_momentum(w, dw, config=None):
     # TODO: Implement the momentum update formula. Store the updated value in #
     # the next_w variable. You should also use and update the velocity v.     #
     ###########################################################################
-    pass
+    m = config['momentum']
+    lr = config['learning_rate']
+    v = m * v - lr * dw
+    next_w = w + v
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -99,7 +102,14 @@ def rmsprop(x, dx, config=None):
     # in the next_x variable. Don't forget to update cache value stored in    #
     # config['cache'].                                                        #
     ###########################################################################
-    pass
+    dr = config['decay_rate']
+    cache = config['cache']
+    lr = config['learning_rate']
+    eps = config['epsilon']
+
+    cache = dr * cache + (1 - dr) * (dx**2)
+    next_x = x - (lr * dx) / (np.sqrt(cache) + eps)
+    config['cache'] = cache
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -136,7 +146,24 @@ def adam(x, dx, config=None):
     # the next_x variable. Don't forget to update the m, v, and t variables   #
     # stored in config.                                                       #
     ###########################################################################
-    pass
+    beta1, beta2 = config['beta1'], config['beta2']
+    m, v, t = config['m'], config['v'], config['t']
+    eps, lr = config['epsilon'], config['learning_rate']
+    
+    # momentum
+    m = beta1 * m + (1.0 - beta1) * dx
+    mt = m / (1.0 - beta1**t)
+    config['m'] = m
+
+    # rmsprop
+    v = beta2 * v + (1.0 - beta2) * (dx**2)
+    vt = v / (1.0 - beta2**t)
+    config['v'] = v
+
+    # result
+    #next_x = x - lr * m / (np.sqrt(v) + eps)
+    next_x = x - lr * mt / (np.sqrt(vt) + eps)
+    config['t'] = t + 1
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
