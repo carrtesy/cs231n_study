@@ -9,3 +9,5 @@
 
 ## Assignment2
 ### 1. [Fully Connected Network](https://github.com/dongminkim0220/cs231n_study/blob/master/assignment2/FullyConnectedNets.ipynb)
+### 2. [Batch Normalization](https://github.com/dongminkim0220/cs231n_study/blob/master/assignment2/BatchNormalization.ipynb)
+### 3. [Dropout](https://github.com/dongminkim0220/cs231n_study/blob/master/assignment2/Dropout.ipynb)
