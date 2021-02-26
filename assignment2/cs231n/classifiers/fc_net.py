@@ -258,7 +258,10 @@ class FullyConnectedNet(object):
                 _out, cache = affine_forward(_in, self.params[weight], self.params[bias])
             else :
                 if self.use_batchnorm:
-                    _out, cache = affine_batchnorm_relu_forward(_in, self.params[weight], self.params[bias], self.params[gamma], self.params[beta], bn_param = self.bn_params[i-1])
+                    if self.use_dropout:
+                        _out, cache = affine_batchnorm_relu_dropout_forward(_in, self.params[weight], self.params[bias], self.params[gamma], self.params[beta], bn_param = self.bn_params[i-1], dropout_param = self.dropout_param)
+                    else:
+                        _out, cache = affine_batchnorm_relu_forward(_in, self.params[weight], self.params[bias], self.params[gamma], self.params[beta], bn_param = self.bn_params[i-1])
                 else:    
                     _out, cache = affine_relu_forward(_in, self.params[weight], self.params[bias])
             _in = _out
@@ -295,7 +298,10 @@ class FullyConnectedNet(object):
                 upstream, grads[weight], grads[bias] = affine_backward(upstream, caches[layernum]) 
             else:
                 if self.use_batchnorm:
-                    upstream, grads[weight], grads[bias], grads[gamma], grads[beta] = affine_batchnorm_relu_backward(upstream, caches[layernum])
+                    if self.use_dropout:
+                        upstream, grads[weight], grads[bias], grads[gamma], grads[beta] = affine_batchnorm_relu_dropout_backward(upstream, caches[layernum])
+                    else:
+                        upstream, grads[weight], grads[bias], grads[gamma], grads[beta] = affine_batchnorm_relu_backward(upstream, caches[layernum])
                 else:    
                     upstream, grads[weight], grads[bias] = affine_relu_backward(upstream, caches[layernum])
             loss += self.reg * 0.5 * np.sum(self.params[weight] ** 2)

@@ -2,6 +2,23 @@ pass
 from cs231n.layers import *
 from cs231n.fast_layers import *
 
+def affine_batchnorm_relu_dropout_forward(x, w, b, gamma, beta, bn_param, dropout_param):
+    a, fc_cache = affine_forward(x, w, b)
+    bn_param_dim = a.shape[1]
+    b, bn_cache = batchnorm_forward(a, gamma, beta, bn_param)
+    r, relu_cache = relu_forward(b)
+    out, dropout_cache = dropout_forward(r, dropout_param)
+    cache = (fc_cache, bn_cache, relu_cache, dropout_param)
+    return out, cache
+
+def affine_batchnorm_relu_dropout_backward(dout, cache):
+    fc_cache, bn_cache, relu_cache, dropout_cache = cache
+    ddr = dropout_backward(dout, dropout_cache)
+    da = relu_backward(ddr, relu_cache)
+    dx_bn, dgamma, dbeta = batchnorm_backward(da, bn_cache)
+    dx, dw, db = affine_backward(dx_bn, fc_cache)
+    return dx, dw, db, dgamma, dbeta
+
 def affine_batchnorm_relu_forward(x, w, b, gamma, beta, bn_param):
     a, fc_cache = affine_forward(x, w, b)
     bn_param_dim = a.shape[1]
