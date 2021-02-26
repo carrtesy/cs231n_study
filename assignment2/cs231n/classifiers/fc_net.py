@@ -184,8 +184,13 @@ class FullyConnectedNet(object):
         for (row, col) in pairs:
             layernum += 1
             weight_name, bias_name = 'W' + str(layernum), 'b' + str(layernum)
+            gamma_name, beta_name = 'gamma' + str(layernum), 'beta' + str(layernum)
             self.params[weight_name] = std * np.random.randn(row, col)
             self.params[bias_name] = np.zeros(col)
+            if self.use_batchnorm and layernum != len(pairs):
+                self.params[gamma_name] = np.random.randn(col)
+                self.params[beta_name] = np.random.randn(col)
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -248,10 +253,14 @@ class FullyConnectedNet(object):
         for i in range(1, self.num_layers + 1):
             layernum = str(i)
             weight, bias = 'W' + layernum, 'b' + layernum
+            gamma, beta = "gamma" + layernum, "beta" + layernum
             if i == self.num_layers: 
                 _out, cache = affine_forward(_in, self.params[weight], self.params[bias])
             else :
-                _out, cache = affine_relu_forward(_in, self.params[weight], self.params[bias])
+                if self.use_batchnorm:
+                    _out, cache = affine_batchnorm_relu_forward(_in, self.params[weight], self.params[bias], self.params[gamma], self.params[beta], bn_param = self.bn_params[i-1])
+                else:    
+                    _out, cache = affine_relu_forward(_in, self.params[weight], self.params[bias])
             _in = _out
             caches[layernum] = cache
         scores = _out
@@ -281,10 +290,14 @@ class FullyConnectedNet(object):
         for i in range(self.num_layers, 0, -1):
             layernum = str(i)
             weight, bias = 'W' + layernum, 'b' + layernum
+            gamma, beta = "gamma" + layernum, "beta" + layernum
             if i == self.num_layers:
                 upstream, grads[weight], grads[bias] = affine_backward(upstream, caches[layernum]) 
             else:
-                upstream, grads[weight], grads[bias] = affine_relu_backward(upstream, caches[layernum])
+                if self.use_batchnorm:
+                    upstream, grads[weight], grads[bias], grads[gamma], grads[beta] = affine_batchnorm_relu_backward(upstream, caches[layernum])
+                else:    
+                    upstream, grads[weight], grads[bias] = affine_relu_backward(upstream, caches[layernum])
             loss += self.reg * 0.5 * np.sum(self.params[weight] ** 2)
             grads[weight] += self.reg * self.params[weight] 
         ############################################################################

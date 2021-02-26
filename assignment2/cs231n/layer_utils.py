@@ -2,6 +2,21 @@ pass
 from cs231n.layers import *
 from cs231n.fast_layers import *
 
+def affine_batchnorm_relu_forward(x, w, b, gamma, beta, bn_param):
+    a, fc_cache = affine_forward(x, w, b)
+    bn_param_dim = a.shape[1]
+    b, bn_cache = batchnorm_forward(a, gamma, beta, bn_param)
+    out, relu_cache = relu_forward(b)
+    cache = (fc_cache, bn_cache, relu_cache)
+    return out, cache
+
+def affine_batchnorm_relu_backward(dout, cache):
+    fc_cache, bn_cache, relu_cache = cache
+    da = relu_backward(dout, relu_cache)
+    dx_bn, dgamma, dbeta = batchnorm_backward(da, bn_cache)
+    dx, dw, db = affine_backward(dx_bn, fc_cache)
+    return dx, dw, db, dgamma, dbeta
+    
 
 def affine_relu_forward(x, w, b):
     """
