@@ -37,18 +37,31 @@ class ThreeLayerConvNet(object):
         self.params = {}
         self.reg = reg
         self.dtype = dtype
-
         ############################################################################
         # TODO: Initialize weights and biases for the three-layer convolutional    #
-        # network. Weights should be initialized from a Gaussian with standard     #
-        # deviation equal to weight_scale; biases should be initialized to zero.   #
-        # All weights and biases should be stored in the dictionary self.params.   #
-        # Store weights and biases for the convolutional layer using the keys 'W1' #
-        # and 'b1'; use keys 'W2' and 'b2' for the weights and biases of the       #
-        # hidden affine layer, and keys 'W3' and 'b3' for the weights and biases   #
-        # of the output affine layer.                                              #
-        ############################################################################
-        pass
+        # network. Weights should be initialized from a Gaussian centered at 0.0   #
+        # with standard deviation equal to weight_scale; biases should be          #
+        # initialized to zero. All weights and biases should be stored in the      #
+        #  dictionary self.params. Store weights and biases for the convolutional  #
+        # layer using the keys 'W1' and 'b1'; use keys 'W2' and 'b2' for the       #
+        # weights and biases of the hidden affine layer, and keys 'W3' and 'b3'    #
+        # for the weights and biases of the output affine layer.                   #
+        #                                                                          #
+        # IMPORTANT: For this assignment, you can assume that the padding          #
+        # and stride of the first convolutional layer are chosen so that           #
+        # **the width and height of the input are preserved**. Take a look at      #
+        # the start of the loss() function to see how that happens.                #                             ############################################################################
+        C, H, W = input_dim
+        F, FH, FW = num_filters, filter_size, filter_size
+        self.params['W1'] = weight_scale * np.random.randn(F, C, FH, FW)
+        self.params['b1'] = np.zeros(F)
+
+        pool_H, pool_W = H // 2, W // 2
+        self.params['W2'] = weight_scale * np.random.randn(pool_H * pool_W * F, hidden_dim)
+        self.params['b2'] = np.zeros(hidden_dim)
+    
+        self.params['W3'] = weight_scale * np.random.randn(hidden_dim, num_classes)
+        self.params['b3'] = np.zeros(num_classes)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -80,7 +93,13 @@ class ThreeLayerConvNet(object):
         # computing the class scores for X and storing them in the scores          #
         # variable.                                                                #
         ############################################################################
-        pass
+        conv_out, conv_cache = conv_forward_naive(X, W1, b1, conv_param)
+        relu1_out, relu1_cache = relu_forward(conv_out)
+        mpool_out, mpool_cache = max_pool_forward_naive(relu1_out, pool_param)
+        affine1_out, affine1_cache = affine_forward(mpool_out, W2, b2)
+        relu2_out, relu2_cache = relu_forward(affine1_out)
+        affine2_out, affine2_cache = affine_forward(relu2_out, W3, b3)
+        scores = affine2_out
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -95,7 +114,21 @@ class ThreeLayerConvNet(object):
         # data loss using softmax, and make sure that grads[k] holds the gradients #
         # for self.params[k]. Don't forget to add L2 regularization!               #
         ############################################################################
-        pass
+        loss, upstream = softmax_loss(scores, y)
+        dx, grads['W3'], grads['b3'] = affine_backward(upstream, affine2_cache)
+        dx = relu_backward(dx, relu2_cache)
+        dx, grads['W2'], grads['b2'] = affine_backward(dx, affine1_cache)
+        dx = max_pool_backward_naive(dx, mpool_cache)
+        dx = relu_backward(dx, relu1_cache)
+        dx, grads['W1'], grads['b1'] = conv_backward_naive(dx, conv_cache)
+        
+        # L2 Reg
+        reg = self.reg
+        grads['W1'] += reg * W1
+        grads['W2'] += reg * W2
+        grads['W3'] += reg * W3
+        
+        loss += 0.5 * reg * (np.sum(W1**2) + np.sum(W2**2) + np.sum(W3**2))
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
